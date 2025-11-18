@@ -1,0 +1,73 @@
+name: quranapp
+description: "Muslim DZ - Prayer Times & Quran App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # UI & Navigation
+  cupertino_icons: ^1.0.8
+  google_nav_bar: ^5.0.7
+  curved_navigation_bar: ^1.0.6
+  awesome_dialog: ^3.2.1
+  flutter_animate: ^4.5.0
+  flutter_svg: ^2.0.10
+  google_fonts: ^6.1.0
+  vibration: ^3.1.4
+  wakelock_plus: ^1.4.0
+
+  # State Management
+  get: ^4.6.5
+
+  # Storage & Preferences
+  shared_preferences: ^2.3.3
+
+  # Quran & Islamic Content
+  quran: ^1.2.0
+
+  # Audio Players
+  audioplayers: ^6.5.1
+  just_audio: ^0.10.5
+
+  # Notifications & Scheduling
+  flutter_local_notifications: ^19.5.0
+  timezone: ^0.10.1
+
+  # Location & Compass
+  geolocator: ^14.0.1
+  flutter_compass: ^0.8.1
+  permission_handler: ^12.0.1
+
+  # Network & HTTP
+  http: ^1.6.0
+
+  # Utilities
+  intl: ^0.20.2
+  image_picker: ^1.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.14.3
+  rename: ^3.0.2
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "images/janaa.jpg"
+  min_sdk_android: 21
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - images/
+    - data/adhkar.json
+    - assets/sounds/adan.mp3
