@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/notifications_service.dart';
+import '../config/debug_config.dart';
 
 // ============================================
 // CONSTANTS
@@ -115,7 +116,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
         loading = false;
         errorMessage = "فشل تحميل المواقيت: $e";
       });
-      debugPrint('❌ Error fetching prayer times: $e');
+      DebugConfig.log('Error fetching prayer times: $e');
     }
 
     setState(() {});
@@ -155,7 +156,7 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
       );
     }
 
-    debugPrint('✅ Scheduled $notificationId prayer notifications');
+    DebugConfig.log('Scheduled $notificationId prayer notifications');
   }
 
   void _startCountdown() {
@@ -296,6 +297,20 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
     );
   }
 
+  // 🔥 DEBUG: Clear all notifications
+  Future<void> _clearAllNotifications() async {
+    await NotificationService.cancelAllNotifications();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('🗑️ تم حذف جميع الإشعارات المجدولة'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() {
     countdownTimer?.cancel();
@@ -324,55 +339,74 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
           ),
         ),
         actions: [
-          // 🔥 DEBUG MENU
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.bug_report, color: Colors.white),
-            onSelected: (value) {
-              switch (value) {
-                case 'test_now':
-                  _testNotificationNow();
-                  break;
-                case 'test_10s':
-                  _testNotificationIn10Seconds();
-                  break;
-                case 'show_pending':
-                  _showPendingNotifications();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'test_now',
-                child: Row(
-                  children: [
-                    Icon(Icons.notifications_active, size: 20),
-                    SizedBox(width: 8),
-                    Text('إشعار فوري'),
-                  ],
+          // 🔥 ONLY SHOW DEBUG MENU IF DEBUG MODE IS ENABLED
+          if (DebugConfig.isDebugMode) ...[
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.bug_report, color: Colors.amber),
+              tooltip: 'Debug Menu',
+              onSelected: (value) {
+                switch (value) {
+                  case 'test_now':
+                    _testNotificationNow();
+                    break;
+                  case 'test_10s':
+                    _testNotificationIn10Seconds();
+                    break;
+                  case 'show_pending':
+                    _showPendingNotifications();
+                    break;
+                  case 'clear_all':
+                    _clearAllNotifications();
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'test_now',
+                  child: Row(
+                    children: [
+                      Icon(Icons.notifications_active, size: 20),
+                      SizedBox(width: 8),
+                      Text('إشعار فوري'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'test_10s',
-                child: Row(
-                  children: [
-                    Icon(Icons.timer, size: 20),
-                    SizedBox(width: 8),
-                    Text('إشعار بعد 10 ثواني'),
-                  ],
+                const PopupMenuItem(
+                  value: 'test_10s',
+                  child: Row(
+                    children: [
+                      Icon(Icons.timer, size: 20),
+                      SizedBox(width: 8),
+                      Text('إشعار بعد 10 ثواني'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'show_pending',
-                child: Row(
-                  children: [
-                    Icon(Icons.list, size: 20),
-                    SizedBox(width: 8),
-                    Text('عرض المجدولة'),
-                  ],
+                const PopupMenuItem(
+                  value: 'show_pending',
+                  child: Row(
+                    children: [
+                      Icon(Icons.list, size: 20),
+                      SizedBox(width: 8),
+                      Text('عرض المجدولة'),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
+                const PopupMenuItem(
+                  value: 'clear_all',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_sweep, size: 20, color: Colors.red),
+                      SizedBox(width: 8),
+                      Text(
+                        'حذف كل الإشعارات',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
       body: Container(
@@ -383,11 +417,54 @@ class _PrayerTimesPageState extends State<PrayerTimesPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: loading
-            ? const Center(child: CircularProgressIndicator(color: Colors.white))
-            : errorMessage.isNotEmpty
-            ? _buildErrorWidget()
-            : _buildPrayerTimesContent(),
+        child: Stack(
+          children: [
+            // Main content
+            loading
+                ? const Center(
+                child: CircularProgressIndicator(color: Colors.white))
+                : errorMessage.isNotEmpty
+                ? _buildErrorWidget()
+                : _buildPrayerTimesContent(),
+
+            // 🐛 DEBUG BANNER (bottom-right corner)
+            if (DebugConfig.isDebugMode)
+              Positioned(
+                bottom: 16,
+                right: 16,
+                child: Container(
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.9),
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.bug_report, size: 16, color: Colors.black87),
+                      SizedBox(width: 4),
+                      Text(
+                        'DEBUG MODE',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
